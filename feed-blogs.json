@@ -1,8 +1,11 @@
 {
-  "generatedAt": "2026-07-06T03:58:22.902Z",
+  "generatedAt": "2026-07-06T04:13:15.583Z",
   "lookbackHours": 72,
   "blogs": [],
   "stats": {
     "blogPosts": 0
-  }
+  },
+  "errors": [
+    "Blog: Error processing StepFun Docs: fetch failed"
+  ]
 }
