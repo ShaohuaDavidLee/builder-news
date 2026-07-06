@@ -28,7 +28,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install dependencies
         run: cd scripts && npm install
@@ -38,8 +38,30 @@ jobs:
           X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
           POD2TXT_API_KEY: ${{ secrets.POD2TXT_API_KEY }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.mode }}" != "all" ]; then
-            cd scripts && node generate-feed.js --${{ inputs.mode }}
+          MODE="all"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODE="${{ inputs.mode }}"
+          fi
+
+          missing=0
+          if [ "$MODE" = "all" ] || [ "$MODE" = "tweets-only" ]; then
+            if [ -z "$X_BEARER_TOKEN" ]; then
+              echo "::error title=Missing repository secret::X_BEARER_TOKEN is required for mode '$MODE'. Add it in Settings > Secrets and variables > Actions."
+              missing=1
+            fi
+          fi
+          if [ "$MODE" = "all" ] || [ "$MODE" = "podcasts-only" ]; then
+            if [ -z "$POD2TXT_API_KEY" ]; then
+              echo "::error title=Missing repository secret::POD2TXT_API_KEY is required for mode '$MODE'. Add it in Settings > Secrets and variables > Actions."
+              missing=1
+            fi
+          fi
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+          if [ "$MODE" != "all" ]; then
+            cd scripts && node generate-feed.js --$MODE
           else
             cd scripts && node generate-feed.js
           fi
