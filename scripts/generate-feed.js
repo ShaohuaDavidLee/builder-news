@@ -30,6 +30,7 @@ const PODCAST_LOOKBACK_HOURS = 336; // 14 days — podcasts publish weekly/biwee
 const BLOG_LOOKBACK_HOURS = 72;
 const MAX_TWEETS_PER_USER = 3;
 const MAX_ARTICLES_PER_BLOG = 3;
+const MIN_ARTICLE_CONTENT_CHARS = 120;
 const X_USER_LOOKUP_BATCH_SIZE = 5;
 const X_RETRY_STATUSES = new Set([500, 502, 503, 504]);
 const X_RETRY_ATTEMPTS = 3;
@@ -739,6 +740,167 @@ function parseClaudeBlogIndex(html) {
   return articles;
 }
 
+function decodeHtmlEntities(text = "") {
+  return text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ");
+}
+
+function stripHtml(html = "") {
+  return decodeHtmlEntities(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<svg[\s\S]*?<\/svg>/gi, "")
+      .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+      .replace(/<footer[\s\S]*?<\/footer>/gi, "")
+      .replace(/<header[\s\S]*?<\/header>/gi, "")
+      .replace(/<[^>]+>/g, " "),
+  )
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractMetaContent(html, names) {
+  for (const name of names) {
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const patterns = [
+      new RegExp(
+        `<meta[^>]+(?:name|property)=["']${escapedName}["'][^>]+content=["']([^"']+)["'][^>]*>`,
+        "i",
+      ),
+      new RegExp(
+        `<meta[^>]+content=["']([^"']+)["'][^>]+(?:name|property)=["']${escapedName}["'][^>]*>`,
+        "i",
+      ),
+    ];
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match?.[1]) return decodeHtmlEntities(match[1].trim());
+    }
+  }
+  return "";
+}
+
+function extractJsonLdArticleMetadata(html) {
+  const jsonLdRegex =
+    /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match;
+  while ((match = jsonLdRegex.exec(html)) !== null) {
+    try {
+      const parsed = JSON.parse(match[1]);
+      const items = Array.isArray(parsed) ? parsed : [parsed];
+      for (const item of items) {
+        const graph = item["@graph"] || [item];
+        for (const entry of graph) {
+          const type = entry["@type"];
+          const types = Array.isArray(type) ? type : [type];
+          if (
+            types.some((t) =>
+              ["Article", "BlogPosting", "NewsArticle", "TechArticle"].includes(
+                t,
+              ),
+            )
+          ) {
+            return {
+              title: entry.headline || entry.name || "",
+              author:
+                entry.author?.name ||
+                entry.creator?.name ||
+                (Array.isArray(entry.author) ? entry.author[0]?.name : "") ||
+                "",
+              publishedAt: entry.datePublished || entry.dateModified || null,
+              description: entry.description || "",
+            };
+          }
+        }
+      }
+    } catch {
+      // Skip invalid structured data.
+    }
+  }
+  return {};
+}
+
+function hashString(value) {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i++) {
+    hash = ((hash << 5) + hash + value.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(36);
+}
+
+function normalizeCandidateUrl(href, baseUrl) {
+  if (!href || href.startsWith("#")) return null;
+  if (/^(mailto|tel|javascript):/i.test(href)) return null;
+
+  try {
+    const url = new URL(decodeHtmlEntities(href), baseUrl);
+    if (!["http:", "https:"].includes(url.protocol)) return null;
+    url.hash = "";
+    for (const key of [...url.searchParams.keys()]) {
+      if (/^utm_/i.test(key) || key === "ref") url.searchParams.delete(key);
+    }
+    if (/\.(png|jpe?g|gif|svg|webp|pdf|zip|dmg|exe)$/i.test(url.pathname)) {
+      return null;
+    }
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function isGenericArticleUrl(url, blog) {
+  const patterns = blog.articleUrlPatterns || [];
+  if (patterns.length > 0) {
+    return patterns.some((pattern) => new RegExp(pattern, "i").test(url));
+  }
+
+  const index = new URL(blog.indexUrl);
+  const candidate = new URL(url);
+  if (candidate.origin !== index.origin) return false;
+  if (candidate.pathname === "/" || candidate.pathname === index.pathname) {
+    return false;
+  }
+  return /\/(blog|docs|changelog|news|release|releases|updates|models|guides)\b/i.test(
+    candidate.pathname,
+  );
+}
+
+function parseGenericBlogIndex(html, blog) {
+  if (blog.singlePage) {
+    return [
+      {
+        title: "",
+        url: blog.indexUrl,
+        publishedAt: null,
+        description: "",
+      },
+    ];
+  }
+
+  const articles = [];
+  const seen = new Set();
+  const linkRegex = /<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi;
+  let match;
+  while ((match = linkRegex.exec(html)) !== null) {
+    const url = normalizeCandidateUrl(match[1], blog.indexUrl);
+    if (!url || seen.has(url) || !isGenericArticleUrl(url, blog)) continue;
+    seen.add(url);
+    articles.push({
+      title: "",
+      url,
+      publishedAt: null,
+      description: "",
+    });
+  }
+  return articles;
+}
+
 // Extracts the main text content from an Anthropic Engineering article page.
 // Tries the embedded JSON first (Next.js SSR data), then falls back to
 // stripping HTML tags from the article body.
@@ -883,6 +1045,53 @@ function extractClaudeBlogArticleContent(html) {
   return { title, author, publishedAt, content };
 }
 
+// Generic extractor for official docs, changelogs, and company blog pages.
+// It intentionally stays conservative: metadata comes from JSON-LD/meta/h1,
+// and body text comes from article/main or the cleaned page text.
+function extractGenericArticleContent(html) {
+  const metadata = extractJsonLdArticleMetadata(html);
+  let title =
+    metadata.title ||
+    extractMetaContent(html, ["og:title", "twitter:title"]) ||
+    "";
+  const author = metadata.author || extractMetaContent(html, ["author"]) || "";
+  const publishedAt =
+    metadata.publishedAt ||
+    extractMetaContent(html, [
+      "article:published_time",
+      "date",
+      "dc.date",
+      "pubdate",
+    ]) ||
+    null;
+  const description =
+    metadata.description ||
+    extractMetaContent(html, [
+      "description",
+      "og:description",
+      "twitter:description",
+    ]);
+
+  if (!title) {
+    const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    if (h1Match) title = stripHtml(h1Match[1]);
+  }
+  if (!title) {
+    const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (titleMatch) title = stripHtml(titleMatch[1]);
+  }
+
+  const bodyMatch =
+    html.match(/<article[^>]*>([\s\S]*?)<\/article>/i) ||
+    html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
+  let content = stripHtml(bodyMatch ? bodyMatch[1] : html);
+  if (content.length < MIN_ARTICLE_CONTENT_CHARS) {
+    content = stripHtml(html);
+  }
+
+  return { title, author, publishedAt, description, content };
+}
+
 // Main blog fetching orchestrator.
 // For each blog source in the config, discovers new articles, deduplicates
 // against previously seen URLs, fetches full article content, and returns
@@ -898,7 +1107,7 @@ async function fetchBlogContent(blogs, state, errors) {
     try {
       // Step 1: Discover articles from the blog index page
       const indexRes = await fetch(blog.indexUrl, {
-        headers: { "User-Agent": "FollowBuilders/1.0 (feed aggregator)" },
+        headers: { "User-Agent": RSS_USER_AGENT },
       });
       if (!indexRes.ok) {
         errors.push(
@@ -909,7 +1118,9 @@ async function fetchBlogContent(blogs, state, errors) {
       const indexHtml = await indexRes.text();
 
       // Use the right parser based on which blog this is
-      if (blog.indexUrl.includes("anthropic.com")) {
+      if (blog.parser === "generic") {
+        candidates = parseGenericBlogIndex(indexHtml, blog);
+      } else if (blog.indexUrl.includes("anthropic.com")) {
         candidates = parseAnthropicEngineeringIndex(indexHtml);
       } else if (blog.indexUrl.includes("claude.com")) {
         candidates = parseClaudeBlogIndex(indexHtml);
@@ -924,7 +1135,7 @@ async function fetchBlogContent(blogs, state, errors) {
       const MAX_INDEX_SCAN = MAX_ARTICLES_PER_BLOG; // only look at the N most recent entries
       const newArticles = [];
       for (const article of candidates.slice(0, MAX_INDEX_SCAN)) {
-        if (state.seenArticles[article.url]) continue; // already seen
+        if (!blog.trackUpdates && state.seenArticles[article.url]) continue; // already seen
         // If we have a date, check it's within the lookback window
         if (article.publishedAt && new Date(article.publishedAt) < cutoff)
           continue;
@@ -946,7 +1157,7 @@ async function fetchBlogContent(blogs, state, errors) {
         try {
           // Fetch the full article page
           const articleRes = await fetch(article.url, {
-            headers: { "User-Agent": "FollowBuilders/1.0 (feed aggregator)" },
+            headers: { "User-Agent": RSS_USER_AGENT },
           });
           if (!articleRes.ok) {
             errors.push(
@@ -962,10 +1173,28 @@ async function fetchBlogContent(blogs, state, errors) {
             extracted = extractAnthropicArticleContent(articleHtml);
           } else if (article.url.includes("claude.com/blog")) {
             extracted = extractClaudeBlogArticleContent(articleHtml);
+          } else if (blog.parser === "generic") {
+            extracted = extractGenericArticleContent(articleHtml);
           }
 
           if (!extracted || !extracted.content) {
             errors.push(`Blog: No content extracted from ${article.url}`);
+            continue;
+          }
+          const minContentChars =
+            blog.minContentChars || MIN_ARTICLE_CONTENT_CHARS;
+          if (extracted.content.length < minContentChars) {
+            errors.push(
+              `Blog: Content too short for ${article.url}: ${extracted.content.length} chars`,
+            );
+            continue;
+          }
+
+          const stateKey = blog.trackUpdates
+            ? `${article.url}#${hashString(extracted.content.slice(0, 12000))}`
+            : article.url;
+          if (state.seenArticles[stateKey]) {
+            console.error(`    Skipping "${article.url}" (already seen)`);
             continue;
           }
 
@@ -977,12 +1206,12 @@ async function fetchBlogContent(blogs, state, errors) {
             url: article.url,
             publishedAt: extracted.publishedAt || article.publishedAt || null,
             author: extracted.author || "",
-            description: article.description || "",
+            description: extracted.description || article.description || "",
             content: extracted.content,
           });
 
           // Mark as seen
-          state.seenArticles[article.url] = Date.now();
+          state.seenArticles[stateKey] = Date.now();
 
           // Small delay between article fetches to be polite
           await new Promise((r) => setTimeout(r, 500));
@@ -1090,9 +1319,12 @@ async function main() {
   }
 
   // Fetch blog posts
-  if (runBlogs && sources.blogs && sources.blogs.length > 0) {
+  const activeBlogs = (sources.blogs || []).filter(
+    (blog) => blog.enabled !== false,
+  );
+  if (runBlogs && activeBlogs.length > 0) {
     console.error("Fetching blog content...");
-    const blogContent = await fetchBlogContent(sources.blogs, state, errors);
+    const blogContent = await fetchBlogContent(activeBlogs, state, errors);
     console.error(`  Found ${blogContent.length} new blog post(s)`);
 
     const blogFeed = {

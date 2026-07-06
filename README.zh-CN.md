@@ -11,8 +11,8 @@
 每日或每周推送到你常用的通讯工具（Telegram、Discord、WhatsApp 等），包含：
 
 - 顶级 AI 播客新节目的精华摘要
-- 26 位精选 AI 建造者在 X/Twitter 上的关键观点和洞察
-- AI 公司官方博客的完整文章（Anthropic Engineering、Claude Blog）
+- 30 位精选 AI 建造者和官方账号在 X/Twitter 上的关键观点和洞察
+- AI 公司官方博客、开发者文档和中文厂商更新（Anthropic、Claude、Kimi、Z.ai、阶跃星辰、MiniMax、Trae、Qoder 等）
 - 所有原始内容的链接
 - 支持英文、中文或双语版本
 
@@ -39,7 +39,7 @@ Agent 会询问你：
 - "把摘要写得更简短一些"
 - "显示我当前的设置"
 
-信息源列表（建造者和播客）由中心化统一管理和更新——你无需做任何操作即可获得最新的信息源。
+信息源列表由此 fork 的 `config/default-sources.json` 管理。每日 GitHub Actions 会基于该配置更新 `feed-x.json`、`feed-podcasts.json` 和 `feed-blogs.json`。
 
 ## 自定义摘要风格
 
@@ -68,12 +68,20 @@ Skill 使用纯文本 prompt 文件来控制内容的摘要方式。你可以通
 - [The MAD Podcast with Matt Turck](https://www.youtube.com/@DataDrivenNYC)
 - [AI & I by Every](https://www.youtube.com/playlist?list=PLuMcoKK9mKgHtW_o9h5sGO2vXrffKHwJL)
 
-### X 上的 AI 建造者（26位）
-[Andrej Karpathy](https://x.com/karpathy), [Swyx](https://x.com/swyx), [Josh Woodward](https://x.com/joshwoodward), [Boris Cherny](https://x.com/bcherny), [Thibault Sottiaux](https://x.com/thsottiaux), [Peter Yang](https://x.com/petergyang), [Nan Yu](https://x.com/thenanyu), [Madhu Guru](https://x.com/realmadhuguru), [Amanda Askell](https://x.com/AmandaAskell), [Cat Wu](https://x.com/_catwu), [Thariq](https://x.com/trq212), [Google Labs](https://x.com/GoogleLabs), [Amjad Masad](https://x.com/amasad), [Guillermo Rauch](https://x.com/rauchg), [Alex Albert](https://x.com/alexalbert__), [Aaron Levie](https://x.com/levie), [Ryo Lu](https://x.com/ryolu_), [Garry Tan](https://x.com/garrytan), [Matt Turck](https://x.com/mattturck), [Zara Zhang](https://x.com/zarazhangrui), [Nikunj Kothari](https://x.com/nikunj), [Peter Steinberger](https://x.com/steipete), [Dan Shipper](https://x.com/danshipper), [Aditya Agarwal](https://x.com/adityaag), [Sam Altman](https://x.com/sama), [Claude](https://x.com/claudeai)
+### X 上的 AI 建造者和官方账号（30位）
+[Andrej Karpathy](https://x.com/karpathy), [Swyx](https://x.com/swyx), [Josh Woodward](https://x.com/joshwoodward), [Boris Cherny](https://x.com/bcherny), [Thibault Sottiaux](https://x.com/thsottiaux), [Peter Yang](https://x.com/petergyang), [Nan Yu](https://x.com/thenanyu), [Madhu Guru](https://x.com/realmadhuguru), [Amanda Askell](https://x.com/AmandaAskell), [Cat Wu](https://x.com/_catwu), [Thariq](https://x.com/trq212), [Google Labs](https://x.com/GoogleLabs), [Amjad Masad](https://x.com/amasad), [Guillermo Rauch](https://x.com/rauchg), [Alex Albert](https://x.com/alexalbert__), [Aaron Levie](https://x.com/levie), [Ryo Lu](https://x.com/ryolu_), [Garry Tan](https://x.com/garrytan), [Matt Turck](https://x.com/mattturck), [Zara Zhang](https://x.com/zarazhangrui), [Nikunj Kothari](https://x.com/nikunj), [Peter Steinberger](https://x.com/steipete), [Dan Shipper](https://x.com/danshipper), [Aditya Agarwal](https://x.com/adityaag), [Sam Altman](https://x.com/sama), [Claude](https://x.com/claudeai), [Kimi](https://x.com/Kimi_Moonshot), [Z.ai](https://x.com/Zai_org), [MiniMax](https://x.com/MiniMax_AI), [StepFun](https://x.com/StepFun_ai)
 
-### 官方博客（2个）
+### 官方博客和开发者文档
 - [Anthropic Engineering](https://www.anthropic.com/engineering) — Anthropic 团队的技术深度文章
 - [Claude Blog](https://claude.com/blog) — Claude 的产品公告与更新
+- [Kimi](https://www.kimi.com/ai-models/kimi-k2-6) — Kimi 模型更新
+- [Z.ai Docs](https://docs.z.ai/) — 智谱 / Z.ai 开发者文档与 GLM 模型说明
+- [StepFun Docs](https://platform.stepfun.com/docs/zh/welcome) — 阶跃星辰开放平台文档
+- [MiniMax Blog](https://www.minimax.io/blog) 与 [MiniMax Docs](https://platform.minimax.io/docs/guides/models-intro) — MiniMax 模型、Agent 和 API 更新
+- [Trae CN Changelog](https://docs.trae.cn/ide_changelog) — Trae 国内版更新日志
+- [Qoder Docs](https://docs.qoder.com/zh) — Qoder CLI 和产品文档
+
+CodeBuddy、WorkBuddy、Coze、Qoder Blog 等动态站点已记录在 `config/default-sources.json` 中，但默认 `enabled: false`。这些页面的静态 HTML 不暴露正文，后续可在加入浏览器渲染抓取后开启。
 
 ## 安装
 
@@ -83,13 +91,13 @@ Skill 使用纯文本 prompt 文件来控制内容的摘要方式。你可以通
 clawhub install follow-builders
 
 # 或手动安装
-git clone https://github.com/zarazhangrui/follow-builders.git ~/skills/follow-builders
+git clone https://github.com/ShaohuaDavidLee/builder-news.git ~/skills/follow-builders
 cd ~/skills/follow-builders/scripts && npm install
 ```
 
 ### Claude Code
 ```bash
-git clone https://github.com/zarazhangrui/follow-builders.git ~/.claude/skills/follow-builders
+git clone https://github.com/ShaohuaDavidLee/builder-news.git ~/.claude/skills/follow-builders
 cd ~/.claude/skills/follow-builders/scripts && npm install
 ```
 
@@ -102,7 +110,7 @@ cd ~/.claude/skills/follow-builders/scripts && npm install
 
 ## 工作原理
 
-1. 中心化 feed 每日更新，抓取所有信息源的最新内容（博客文章通过网页抓取，YouTube 字幕通过 Supadata，X/Twitter 通过官方 API）
+1. 此 fork 的 GitHub Actions 每日更新 feed，抓取所有信息源的最新内容（博客文章通过网页抓取，YouTube 字幕通过 Supadata，X/Twitter 通过官方 API）
 2. 你的 agent 获取 feed——一次 HTTP 请求，不需要 API key
 3. 你的 agent 根据你的偏好将原始内容重新混编为易消化的摘要
 4. 摘要推送到你的通讯工具（或直接在聊天中显示）

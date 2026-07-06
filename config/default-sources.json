@@ -45,6 +45,165 @@
       "indexUrl": "https://claude.com/blog",
       "articleBaseUrl": "https://claude.com/blog/",
       "fetchMethod": "http"
+    },
+    {
+      "name": "Kimi",
+      "type": "scrape",
+      "parser": "generic",
+      "indexUrl": "https://www.kimi.com/ai-models/kimi-k2-6",
+      "articleBaseUrl": "https://www.kimi.com",
+      "singlePage": true,
+      "trackUpdates": true,
+      "fetchMethod": "http"
+    },
+    {
+      "name": "Z.ai Docs",
+      "type": "scrape",
+      "parser": "generic",
+      "indexUrl": "https://docs.z.ai/guides/overview/quick-start",
+      "articleBaseUrl": "https://docs.z.ai",
+      "articleUrlPatterns": [
+        "^https://docs\\.z\\.ai/(?:guides|api-reference|cn|en)"
+      ],
+      "fetchMethod": "http"
+    },
+    {
+      "name": "Z.ai GLM-5.2 Docs",
+      "type": "scrape",
+      "parser": "generic",
+      "indexUrl": "https://docs.z.ai/guides/llm/glm-5.2",
+      "articleBaseUrl": "https://docs.z.ai",
+      "singlePage": true,
+      "trackUpdates": true,
+      "fetchMethod": "http"
+    },
+    {
+      "name": "StepFun Docs",
+      "type": "scrape",
+      "parser": "generic",
+      "indexUrl": "https://platform.stepfun.com/docs/zh/welcome",
+      "articleBaseUrl": "https://platform.stepfun.com",
+      "articleUrlPatterns": [
+        "^https://platform\\.stepfun\\.com/docs/zh/(?:updates|models|guides|step-plan|quickstart|release|agents|tool-call|mcp|pricing)"
+      ],
+      "fetchMethod": "http"
+    },
+    {
+      "name": "MiniMax Blog",
+      "type": "scrape",
+      "parser": "generic",
+      "indexUrl": "https://www.minimax.io/blog",
+      "articleBaseUrl": "https://www.minimax.io",
+      "articleUrlPatterns": [
+        "^https://www\\.minimax\\.io/blog/"
+      ],
+      "fetchMethod": "http"
+    },
+    {
+      "name": "MiniMax Docs",
+      "type": "scrape",
+      "parser": "generic",
+      "indexUrl": "https://platform.minimax.io/docs/guides/models-intro",
+      "articleBaseUrl": "https://platform.minimax.io",
+      "articleUrlPatterns": [
+        "^https://platform\\.minimax\\.io/docs/(?:guides|api-reference|release|changelog)"
+      ],
+      "fetchMethod": "http"
+    },
+    {
+      "name": "CodeBuddy Docs",
+      "type": "scrape",
+      "enabled": false,
+      "disabledReason": "Static HTML only contains a shell; enable after adding rendered-page scraping.",
+      "parser": "generic",
+      "indexUrl": "https://www.codebuddy.cn/docs/",
+      "articleBaseUrl": "https://www.codebuddy.cn",
+      "singlePage": true,
+      "trackUpdates": true,
+      "fetchMethod": "http"
+    },
+    {
+      "name": "CodeBuddy Blog",
+      "type": "scrape",
+      "enabled": false,
+      "disabledReason": "Static HTML does not expose article links reliably; enable after adding rendered-page scraping.",
+      "parser": "generic",
+      "indexUrl": "https://www.codebuddy.cn/blog/",
+      "articleBaseUrl": "https://www.codebuddy.cn",
+      "articleUrlPatterns": [
+        "^https://www\\.codebuddy\\.cn/blog/"
+      ],
+      "fetchMethod": "http"
+    },
+    {
+      "name": "WorkBuddy",
+      "type": "scrape",
+      "enabled": false,
+      "disabledReason": "Static HTML only contains a shell; enable after adding rendered-page scraping.",
+      "parser": "generic",
+      "indexUrl": "https://copilot.tencent.com/work/",
+      "articleBaseUrl": "https://copilot.tencent.com",
+      "singlePage": true,
+      "trackUpdates": true,
+      "fetchMethod": "http"
+    },
+    {
+      "name": "Coze Overview",
+      "type": "scrape",
+      "enabled": false,
+      "disabledReason": "Static HTML only contains a shell; enable after adding rendered-page scraping.",
+      "parser": "generic",
+      "indexUrl": "https://www.coze.cn/overview",
+      "articleBaseUrl": "https://www.coze.cn",
+      "singlePage": true,
+      "trackUpdates": true,
+      "fetchMethod": "http"
+    },
+    {
+      "name": "Trae Changelog",
+      "type": "scrape",
+      "enabled": false,
+      "disabledReason": "The Chinese changelog has richer static content; keep this as a watchlist source.",
+      "parser": "generic",
+      "indexUrl": "https://www.trae.ai/changelog",
+      "articleBaseUrl": "https://www.trae.ai",
+      "singlePage": true,
+      "trackUpdates": true,
+      "fetchMethod": "http"
+    },
+    {
+      "name": "Trae CN Changelog",
+      "type": "scrape",
+      "parser": "generic",
+      "indexUrl": "https://docs.trae.cn/ide_changelog",
+      "articleBaseUrl": "https://docs.trae.cn",
+      "singlePage": true,
+      "trackUpdates": true,
+      "fetchMethod": "http"
+    },
+    {
+      "name": "Qoder Blog",
+      "type": "scrape",
+      "enabled": false,
+      "disabledReason": "Static HTML only exposes metadata; enable after adding rendered-page scraping.",
+      "parser": "generic",
+      "indexUrl": "https://qoder.com/zh/blog",
+      "articleBaseUrl": "https://qoder.com",
+      "articleUrlPatterns": [
+        "^https://qoder\\.com/zh/blog/"
+      ],
+      "fetchMethod": "http"
+    },
+    {
+      "name": "Qoder Docs",
+      "type": "scrape",
+      "parser": "generic",
+      "indexUrl": "https://docs.qoder.com/zh",
+      "articleBaseUrl": "https://docs.qoder.com",
+      "articleUrlPatterns": [
+        "^https://docs\\.qoder\\.com/zh/(?:getting-started|using-qoder|cli|changelog|release|blog)"
+      ],
+      "fetchMethod": "http"
     }
   ],
   "x_accounts": [
@@ -73,6 +232,10 @@
     { "name": "Dan Shipper", "handle": "danshipper" },
     { "name": "Aditya Agarwal", "handle": "adityaag" },
     { "name": "Sam Altman", "handle": "sama" },
-    { "name": "Claude", "handle": "claudeai" }
+    { "name": "Claude", "handle": "claudeai" },
+    { "name": "Kimi", "handle": "Kimi_Moonshot" },
+    { "name": "Z.ai", "handle": "Zai_org" },
+    { "name": "MiniMax", "handle": "MiniMax_AI" },
+    { "name": "StepFun", "handle": "StepFun_ai" }
   ]
 }

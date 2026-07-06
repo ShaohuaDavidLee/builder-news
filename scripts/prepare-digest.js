@@ -26,11 +26,12 @@ import { homedir } from 'os';
 const USER_DIR = join(homedir(), '.follow-builders');
 const CONFIG_PATH = join(USER_DIR, 'config.json');
 
-const FEED_X_URL = 'https://raw.githubusercontent.com/zarazhangrui/follow-builders/main/feed-x.json';
-const FEED_PODCASTS_URL = 'https://raw.githubusercontent.com/zarazhangrui/follow-builders/main/feed-podcasts.json';
-const FEED_BLOGS_URL = 'https://raw.githubusercontent.com/zarazhangrui/follow-builders/main/feed-blogs.json';
+const REPO_RAW_BASE = 'https://raw.githubusercontent.com/ShaohuaDavidLee/builder-news/main';
+const FEED_X_URL = `${REPO_RAW_BASE}/feed-x.json`;
+const FEED_PODCASTS_URL = `${REPO_RAW_BASE}/feed-podcasts.json`;
+const FEED_BLOGS_URL = `${REPO_RAW_BASE}/feed-blogs.json`;
 
-const PROMPTS_BASE = 'https://raw.githubusercontent.com/zarazhangrui/follow-builders/main/prompts';
+const PROMPTS_BASE = `${REPO_RAW_BASE}/prompts`;
 const PROMPT_FILES = [
   'summarize-podcast.md',
   'summarize-tweets.md',
